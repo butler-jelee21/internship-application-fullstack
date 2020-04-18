@@ -2,6 +2,8 @@ addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request))
 })
 
+let tracker = 0;
+
 // TODO: rename html rewriter classes
 class AttributeRewriter {
   constructor(attributeName) {
@@ -10,21 +12,46 @@ class AttributeRewriter {
 
   element(element) {
     const attribute = element.getAttribute('id');
-    if (attribute == 'title') {
+    // variant 1 => Linkedin
+    // variant 2 => Github
+    if (tracker) {
+      // console.log(`tracker is ${tracker}`);
+      if (attribute == 'title') {
       element.setInnerContent('Jesse\'s GitHub');
+      }
+      if (element.tagName == 'title') {
+        element.setInnerContent('Jesse\'s GitHub');
+      }
+      if (attribute == 'description') {
+        element.setInnerContent('This is displaying Jesse\'s GitHub!');
+      }
+      if (attribute == 'url') {
+        console.log('reach')
+        element.setInnerContent('Go to Jesse\'s GitHub!');
+      }
+      if (element.getAttribute('href')) {
+        element.setAttribute('href', 'https://github.com/butler-jelee21');
+      }
     }
-    if (element.tagName == 'title') {
-      element.setInnerContent('Jesse\'s GitHub');
-    }
-    if (attribute == 'description') {
-      element.setInnerContent('This is displaying Jesse\'s GitHub!');
-    }
-    if (attribute == 'url') {
-      console.log('reach')
-      element.setInnerContent('Go to Jesse\'s GitHub!');
-    }
-    if (element.getAttribute('href')) {
-      element.setAttribute('href', 'https://github.com/butler-jelee21');
+    else {
+      // console.log(`tracker is ${tracker}`);
+      if (attribute == 'title') {
+      element.setInnerContent('Jesse\'s LinkedIn');
+      }
+      if (element.tagName == 'title') {
+        element.setInnerContent('Jesse\'s LinkedIn');
+      }
+      if (attribute == 'description') {
+        element.setInnerContent('This is displaying Jesse\'s LinkedIn!');
+      }
+      if (attribute == 'url') {
+        console.log('reach')
+        element.setInnerContent('Go to Jesse\'s LinkedIn!');
+      }
+      if (element.getAttribute('href')) {
+        element.setAttribute('href', 'https://www.linkedin.com/in/jesselee615/');
+      }
+
     }
   }
 }
@@ -63,10 +90,13 @@ async function handleRequest(request) {
     .catch((error) => {
       console.error('Error:', error);
     });
+    console.log(tracker);
     return rewriter.transform(response);
 }
 
 function getRandom(array) {
-  return array[Math.floor(Math.random() * Math.floor(array.length) % array.length)];
+  let idx = Math.floor(Math.random() * Math.floor(array.length) % array.length);
+  tracker = idx;
+  return array[idx];
 }
 
