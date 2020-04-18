@@ -1,6 +1,6 @@
-name = "{{cloudflare-app}}"
+name = "working-intern"
 type = "javascript"
-account_id = ""
+account_id = "9db3a282d3305c77f63dcf4ae6db9e35"
 workers_dev = true
 route = ""
 zone_id = ""
