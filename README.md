@@ -4,6 +4,8 @@
 ## Description
 Jesse's implementation of the Cloudflare Workers application. This implementation contains the minimum requirements and two of the three extra credits.
 
+You can try it out [here] (https://working-intern.cfsplash.workers.dev/) or `https://working-intern.cfsplash.workers.dev/`
+
 ## Citations
 [Source Referenced](https://developers.cloudflare.com/workers/templates/pages/ab_testing/)
 
