@@ -2,20 +2,18 @@ addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request))
 })
 
-let tracker = 0;
+let tracker = null;
+let restart = true;
+const baseUrl = "https://cfw-takehome.developers.workers.dev/api/variants";
 
 // TODO: rename html rewriter classes
-class AttributeRewriter {
-  constructor(attributeName) {
-    this.attributeName = attributeName;
-  }
+class ElementHandler {
 
   element(element) {
     const attribute = element.getAttribute('id');
     // variant 1 => Linkedin
     // variant 2 => Github
-    if (tracker) {
-      // console.log(`tracker is ${tracker}`);
+    if (tracker == 1) {
       if (attribute == 'title') {
       element.setInnerContent('Jesse\'s GitHub');
       }
@@ -26,7 +24,6 @@ class AttributeRewriter {
         element.setInnerContent('This is displaying Jesse\'s GitHub!');
       }
       if (attribute == 'url') {
-        console.log('reach')
         element.setInnerContent('Go to Jesse\'s GitHub!');
       }
       if (element.getAttribute('href')) {
@@ -34,7 +31,6 @@ class AttributeRewriter {
       }
     }
     else {
-      // console.log(`tracker is ${tracker}`);
       if (attribute == 'title') {
       element.setInnerContent('Jesse\'s LinkedIn');
       }
@@ -45,7 +41,6 @@ class AttributeRewriter {
         element.setInnerContent('This is displaying Jesse\'s LinkedIn!');
       }
       if (attribute == 'url') {
-        console.log('reach')
         element.setInnerContent('Go to Jesse\'s LinkedIn!');
       }
       if (element.getAttribute('href')) {
@@ -57,46 +52,58 @@ class AttributeRewriter {
 }
 
 const rewriter = new HTMLRewriter()
-  .on('h1', new AttributeRewriter('title'))
-  .on('title', new AttributeRewriter('title'))
-  .on('p', new AttributeRewriter('title'))
-  .on('a', new AttributeRewriter('title'));
+  .on('h1#title', new ElementHandler())
+  .on('title', new ElementHandler())
+  .on('p#description', new ElementHandler())
+  .on('a#url', new ElementHandler());
 
 /**
- * Respond a random variant from base url
+ * Respond a random variant from base url if no cookies
+ * if there is cookie, respond with appropriate url
  * @param {Request} request
  */
 async function handleRequest(request) {
-  const url = "https://cfw-takehome.developers.workers.dev/api/variants";
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-    .then((response) => {
-      return response.json();
-    })
-      .then((data) => {
-        let variants = data.variants;   // hold url variants
-        let randUrl = getRandom(variants);   // get random url
-        // then fetch the random variant
-        const getRandomResponse = fetch(randUrl)
-          .then((response) => {
-            return response;
-          });
-        return getRandomResponse;
-      })
-    .catch((error) => {
-      console.error('Error:', error);
-    });
-    console.log(tracker);
-    return rewriter.transform(response);
+  const NAME = 'variant';
+  const cookie = request.headers.get('cookie');
+  console.log('Cookie received:', cookie);
+  let variant = null;
+  // get the list of variants
+  let response = await fetch(baseUrl).then((response) => response.json());
+  // store the variants for later access
+  let variants = response.variants;
+
+  // preprocess the responses of the two variants in the case that there is a cookie
+  let v1 = await fetch(variants[0]).then((response) => response.body);
+  let v2 = await fetch(variants[1]).then((response) => response.body);
+  const VARIANT_ONE = new Response(v1);
+  const VARIANT_TWO = new Response(v2);
+
+  // if there is a cookie and the cookie is the first variant, return VARIANT_ONE
+  if (!restart && cookie && cookie.includes(`${NAME}=${variants[0]}`)) {
+    return rewriter.transform(VARIANT_ONE);
+  }
+  // if there is a cookie and the cookie is the second variant, return VARIANT_TWO
+  else if (!restart && cookie && cookie.includes(`${NAME}=${variants[1]}`)) {
+    return rewriter.transform(VARIANT_TWO);
+  }
+  // otherwise, pick a random variant with probability of 0.5 and set the cookie with the variant chosen
+  else {
+    restart = false;
+    let randUrl = getRandom(variants);
+    let idx = variants.indexOf(randUrl);
+    tracker = idx;
+    let randVariant = fetch(randUrl)
+      .then((response) => {
+        let tmpResponse = new Response(response.body);
+        tmpResponse.headers.append('Set-Cookie', `${NAME}=${variants[idx]}`);
+        return rewriter.transform(tmpResponse);
+      });
+    return randVariant;
+  }
 }
 
 function getRandom(array) {
-  let idx = Math.floor(Math.random() * Math.floor(array.length) % array.length);
-  tracker = idx;
+  let idx = Math.random() < 0.5 ? 0 : 1;
   return array[idx];
 }
 
