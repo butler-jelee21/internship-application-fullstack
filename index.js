@@ -6,7 +6,6 @@ let tracker = null;
 let restart = true;
 const baseUrl = "https://cfw-takehome.developers.workers.dev/api/variants";
 
-// TODO: rename html rewriter classes
 class ElementHandler {
 
   element(element) {
@@ -61,6 +60,9 @@ const rewriter = new HTMLRewriter()
  * Respond a random variant from base url if no cookies
  * if there is cookie, respond with appropriate url
  * @param {Request} request
+ * 
+ * Sources Used:
+ * https://developers.cloudflare.com/workers/templates/pages/ab_testing/
  */
 async function handleRequest(request) {
   const NAME = 'variant';
